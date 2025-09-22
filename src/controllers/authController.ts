@@ -49,6 +49,7 @@ export const login = async (req: Request, res: Response) => {
         const user = await prisma.user.findUnique({ where: { email } });
         if(!user) return res.status(404).json({ error: "user doesn't exists"});
 
+        if (!user.password) return res.status(403).json({ error: "Invalid credentials" });
         const isMatch = await bcrypt.compare(password, user.password);
         if(!isMatch) return res.status(403).json({ error: "Invalid credentials"});
 
@@ -71,6 +72,39 @@ export const login = async (req: Request, res: Response) => {
         res.status(500).json({error: "Internal server error"});
     }
 }
+
+
+export const googleCallback = async (req: Request, res: Response) => {
+    try {
+        const { email, name, photo } = req.user as { email: string; name: string; photo: string };
+
+        let user = await prisma.user.findUnique({ where: { email}});
+        if (!user){
+            user = await prisma.user.create({
+                data: { name, email, avatar: photo, provider: 'google' },
+            })
+        } else if (!user.provider || user.provider !== "google"){
+            user = await prisma.user.update({
+                where: {email},
+                data: { provider: 'google', avatar: photo },
+            })
+        }
+
+        const token = generateToken(user.id, user.email);
+        res.cookie("userToken", token, {
+            httpOnly: true,
+            sameSite: 'strict',
+            secure: process.env.NODE_ENV === "production",
+            maxAge: 1 * 24 * 3600 * 1000,
+        });
+
+        res.redirect(`${process.env.CLIENT_URL}/dashboard`)
+    }catch (error) {
+    console.error("Google Auth Error:", error);
+    res.status(500).json({ error: "Internal server error" });
+  };
+}
+
 
 export const logout = (req: Request, res: Response) => {
     res.clearCookie("userToken", {

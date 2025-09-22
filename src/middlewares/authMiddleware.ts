@@ -18,4 +18,4 @@ export const protect = (req: AuthRequest, res: Response, next: NextFunction) => 
     } catch (error) {
         res.status(401).json({ error: "Forbidden: Invalid or expired token"});
     }
-}
+} 

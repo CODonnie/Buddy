@@ -2,6 +2,8 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import authRouter from "./routes/authRoutes";
+import "./config/passport";
+import passport from "passport";
 import { errorHandler, notFound } from "./middlewares/errorMiddleware";
 
 //init
@@ -18,6 +20,7 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(passport.initialize());
 
 //routes
 app.use("/api/auth", authRouter);
