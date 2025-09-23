@@ -5,6 +5,7 @@ import authRouter from "./routes/authRoutes";
 import "./config/passport";
 import passport from "passport";
 import { errorHandler, notFound } from "./middlewares/errorMiddleware";
+import promptRouter from "./routes/promptRoutes";
 
 //init
 dotenv.config();
@@ -24,6 +25,7 @@ app.use(passport.initialize());
 
 //routes
 app.use("/api/auth", authRouter);
+app.use("/api/prompt", promptRouter);
 
 //error handling
 app.use(notFound);
