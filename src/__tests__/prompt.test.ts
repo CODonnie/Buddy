@@ -2,6 +2,21 @@ import request from "supertest";
 import app from "../app";
 import { PrismaClient } from "../generated/prisma";
 
+jest.mock("openai", () => {
+  return {
+    __esModule: true,
+    default: class {
+      chat = {
+        completions: {
+          create: jest.fn().mockResolvedValue({
+            choices: [{ message: { content: "Mocked AI response" } }],
+          }),
+        },
+      };
+    },
+  };
+});
+
 const prisma = new PrismaClient();
 
 const testUser = {
