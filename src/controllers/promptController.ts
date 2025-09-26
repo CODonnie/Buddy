@@ -2,7 +2,6 @@ import { Response } from "express";
 import { PrismaClient } from "../generated/prisma";
 import OpenAI from "openai";
 import { AuthRequest } from "../middlewares/authMiddleware";
-import { string } from "zod";
 
 const prisma = new PrismaClient();
 const agent = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -64,51 +63,55 @@ export const refinePrompt = async (req: AuthRequest, res: Response) => {
     if (!req.user?.id) return res.status(401).json({ error: "Unauthorized" });
 
     const { promptId, rawText, strategy } = req.body;
-
-    let prompt;
-    if (!promptId) {
-      const refinementPrompt = strategy
-        ? `Refine this prompt with the following strategy: "${strategy}". Prompt: "${rawText}"`
-        : `Improve this prompt to be clearer and more specific for study. Prompt: "${rawText}"`;
-
-      const completion = await agent.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: [{ role: "system", content: refinementPrompt }],
-      });
-
-      const refined = completion.choices[0].message?.content ?? "";
-
-      prompt = await prisma.prompt.create({
-        data: {
-          rawText,
-          refined,
-          strategy,
-          userId: req.user.id,
-        },
-      });
+    if (!rawText && !promptId) {
+      return res.status(400).json({ error: "Either rawText or promptId is required" });
     }
-    else {
+
+    let basePrompt = rawText;
+    if (promptId) {
       const existing = await prisma.prompt.findUnique({ where: { id: promptId } });
       if (!existing) return res.status(404).json({ error: "Prompt not found" });
-
-      const refinementPrompt = strategy
-        ? `Refine this prompt with the following strategy: "${strategy}". Prompt: "${existing.rawText}"`
-        : `Improve this prompt to be clearer and more specific for study. Prompt: "${existing.rawText}"`;
-
-      const completion = await agent.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: [{ role: "system", content: refinementPrompt }],
-      });
-
-      const refined = completion.choices[0].message?.content ?? "";
-
-      prompt = await prisma.prompt.update({
-        where: { id: promptId },
-        data: { refined, strategy },
-      });
+      basePrompt = existing.rawText;
     }
 
-    res.status(200).json({ prompt });
+    const refinementInstruction = strategy
+      ? `You are an AI study assistant. Refine the user's study prompt using this strategy: "${strategy}".`
+      : `You are an AI study assistant. Refine the user's study prompt to be clearer, more specific, and more effective.`;
+
+    let refined = "Omo our credit is low for free AI calls";
+    let tokens = 0;
+    let modelUsed = "mock";
+    const start = Date.now();
+
+    if (!MOCK_AI) {
+      const completion = await agent.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          { role: "system", content: refinementInstruction },
+          { role: "user", content: basePrompt },
+        ],
+      });
+
+      refined = completion.choices[0].message?.content ?? "";
+      tokens = completion.usage?.total_tokens ?? 0;
+      modelUsed = completion.model;
+    }
+
+    const prompt = promptId
+      ? await prisma.prompt.update({
+          where: { id: promptId },
+          data: { refined, strategy },
+        })
+      : await prisma.prompt.create({
+          data: { rawText, refined, strategy, userId: req.user.id },
+        });
+
+    const latency = Date.now() - start;
+
+    res.status(200).json({
+      prompt,
+      metadata: { tokens, model: modelUsed, latencyMs: latency },
+    });
   } catch (error) {
     console.error("Refine error:", error);
     res.status(500).json({ error: "Failed to refine prompt" });
