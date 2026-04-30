@@ -1,0 +1,31 @@
+{
+  "name": "buddy",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "description": "Buddy is a collaborative study platform with real-time chat, group discussions, and intelligent tools to improve how students learn together.",
+  "main": "index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run dev --workspace=apps/api\" \"npm run dev --workspace=apps/web\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CODonnie/Buddy.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/CODonnie/Buddy/issues"
+  },
+  "homepage": "https://github.com/CODonnie/Buddy#readme",
+  "dependencies": {
+    "concurrently": "^9.2.1",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^6.0.3"
+  }
+}
