@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { AuthService } from "./auth.service";
 import { registerSchema, loginSchema } from "./auth.schema";
+import { AuthRequest } from "../../shared/middleware/auth.middleware";
 
 
 export class AuthController {
@@ -48,6 +49,26 @@ export class AuthController {
             res.status(400).json({
                 message: error.message
             });
+        }
+    }
+
+    static async me(req: AuthRequest, res: Response) {
+        try {
+            const userId = req.user?.userId;
+
+            if (!userId) {
+                return res.status(401).json({
+                    message: "Unathorized"
+                });
+            };
+
+            const user = await AuthService.getCurrentUser(userId);
+
+            res.status(200).json(user);
+        } catch(error: any) {
+            res.status(400).json({
+                message: error.message,
+            })
         }
     }
 }
