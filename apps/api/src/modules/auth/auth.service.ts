@@ -1,0 +1,69 @@
+import { prisma } from "../../config/db";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+
+const secret = process.env.JWT_SECRET as string;
+
+if (!secret) throw new Error("JWT_SECRET not configured");
+
+export class AuthService {
+    static async register(name: string, email: string, password: string) {
+        const existingUser = await prisma.user.findUnique({ 
+            where: { email },
+        });
+
+        if (existingUser) {
+            throw new Error("User already exists");
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        const user = await prisma.user.create({
+            data: {
+                name,
+                email,
+                password: hashedPassword,
+            },
+        });
+
+        return {
+            user: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                createdAt: user.createdAt,
+            }
+        };
+    }
+
+    static async login(email: string, password: string) {
+        const user = await prisma.user.findUnique({ 
+            where: { email },
+        });
+
+        if (!user) {
+            throw new Error("Invalid Credentials");
+        }
+
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+
+        if (!isPasswordValid) {
+            throw new Error("Invalid Credentials");
+        }
+
+        const accessToken = jwt.sign(
+            { userId: user.id },
+            secret,
+            { expiresIn: "15m"}
+        );
+
+        return {
+            accessToken,
+            user: {
+                id: user.id,
+                name: user.name,
+                email: user.email
+            }
+        }
+    }
+}
