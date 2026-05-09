@@ -1,7 +1,8 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
+import { env } from "../../config/env";
 
-const secret = process.env.JWT_SECRET as string;
+const secret = env.JWT_SECRET;
 if(!secret) throw new Error ("JWT_SECRET not configured");
 
 interface JwtPayload {
