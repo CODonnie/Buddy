@@ -6,10 +6,10 @@ import { asyncHandler } from "../../shared/utils/async-handler";
 
 
 export class AuthController {
-    static register = asyncHandler(async (req, res) => {
+    static register = asyncHandler (async(req, res: Response) => {
         const { name, email, password } = req.body;
 
-        const user = await AuthService.register(name, email, password);
+        const user = await AuthService.register( name, email, password );
 
         res.status(201).json({
             message: "User created successfully",
@@ -17,45 +17,19 @@ export class AuthController {
         });
     });
 
-    static async login(req: Request, res: Response) {
-        try {
-            const parsed = loginSchema.safeParse(req.body);
+    static login = asyncHandler (async (req, res: Response) => {
+        const { email, password } = req.body;
 
-            if (!parsed.success) {
-                return res.status(400).json({
-                    errors: parsed.error.format(),
-                });
-            }
+        const data = await AuthService.login( email, password );
 
-            const { email, password } = parsed.data;
+        res.status(200).json(data);
+    });
 
-            const data = await AuthService.login(email, password);
+    static me = asyncHandler (async (req: AuthRequest, res: Response) => {
+        const userId = req.user?.userId;
 
-            res.status(200).json(data);
-        } catch (error: any) {
-            res.status(400).json({
-                message: error.message
-            });
-        }
-    }
+        const user = await AuthService.getCurrentUser( userId! );
 
-    static async me(req: AuthRequest, res: Response) {
-        try {
-            const userId = req.user?.userId;
-
-            if (!userId) {
-                return res.status(401).json({
-                    message: "Unathorized"
-                });
-            };
-
-            const user = await AuthService.getCurrentUser(userId);
-
-            res.status(200).json(user);
-        } catch (error: any) {
-            res.status(400).json({
-                message: error.message,
-            })
-        }
-    }
+        res.status(200).json(user);
+    });
 }
