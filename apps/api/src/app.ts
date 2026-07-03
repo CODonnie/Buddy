@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import authRoutes from "./modules/auth/auth.routes"
+import userRoutes from "./modules/users/users.routes"
 import { errorMiddleware } from "./shared/middleware/error.middleware";
 
 const app = express();
@@ -13,6 +14,7 @@ app.get("/", (req: express.Request, res: express.Response) => {
 })
 
 app.use("/api/v1/auth", authRoutes);
+app.use("/api/v1/users", userRoutes);
 
 
 app.use(errorMiddleware);

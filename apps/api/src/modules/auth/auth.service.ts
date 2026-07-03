@@ -2,6 +2,7 @@ import { prisma } from "../../config/db";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { env } from "../../config/env"
+import { AppError } from "../../shared/errors/AppErrors";
 
 const secret = env.JWT_SECRET;
 
@@ -14,7 +15,7 @@ export class AuthService {
         });
 
         if (existingUser) {
-            throw new Error("User already exists");
+            throw new AppError(409, "User already exists");
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -43,13 +44,13 @@ export class AuthService {
         });
 
         if (!user) {
-            throw new Error("Invalid Credentials");
+            throw new AppError(401, "Invalid Credentials");
         }
 
         const isPasswordValid = await bcrypt.compare(password, user.password);
 
         if (!isPasswordValid) {
-            throw new Error("Invalid Credentials");
+            throw new AppError(401, "Invalid Credentials");
         }
 
         const accessToken = jwt.sign(
@@ -71,7 +72,7 @@ export class AuthService {
     static async getCurrentUser(userId: string) {
         const user = await prisma.user.findUnique({ where: { id: userId }});
 
-        if (!user) throw new Error("User not found");
+        if (!user) throw new AppError(404, "User not found");
 
         return {
             id: user.id,
