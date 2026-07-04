@@ -1,12 +1,15 @@
 import { prisma } from "../../config/db";
 import bcrypt from "bcrypt";
 import { AppError } from "../../shared/errors/AppErrors";
+import { HTTP_STATUS } from "../../shared/constants/http-status";
+import { UpdateProfileDto, ChangePasswordDto } from "./users.types";
+import { UsersRepository } from "./users.repository";
 
 export class UsersService {
     static async getCurrentUser(userId: string) {
-        const user = await prisma.user.findUnique({ where: { id: userId } });
+        const user = await UsersRepository.findById(userId);
 
-        if (!user) throw new AppError(404, "User not found");
+        if (!user) throw new AppError(HTTP_STATUS.NOT_FOUND, "User not found");
 
         return {
             id: user.id,
@@ -19,64 +22,29 @@ export class UsersService {
         };
     }
 
-    static async updateProfile(userId: string, data: {
-        name?: string; bio?: string; avatarUrl?: string;}) {
-        const user = await prisma.user.findUnique({
-            where: {
-                id: userId,
-            },
-        });
+    static async updateProfile(userId: string, data: UpdateProfileDto) {
+        const user = await UsersRepository.findById(userId);
 
-        if (!user) throw new AppError(404, "User not found");
+        if (!user) throw new AppError(HTTP_STATUS.NOT_FOUND, "User not found");
 
-        const updatedUser = await prisma.user.update({
-            where: {
-                id: userId,
-            },
-            data,
-        });
+        const updatedUser = await UsersRepository.updateUser(userId, data);
 
-        return {
-            message: "Profile updated successfully",
-            user: {
-                id: updatedUser.id,
-                name: updatedUser.name,
-                email: updatedUser.email,
-                bio: updatedUser.bio,
-                avatarUrl: updatedUser.avatarUrl,
-                updatedAt: updatedUser.updatedAt,
-            },
-        };
+        return updatedUser;
     }
 
-    static async changePassword(
-        userId: string, currentPassword: string, newPassword: string
-    ) {
-        const user = await prisma.user.findUnique({
-            where: {
-                id: userId
-            }
-        });
+    static async changePassword(userId: string, data: ChangePasswordDto) {
+        const { currentPassword, newPassword } = data;
 
-        if (!user) throw new AppError(404, "User not found");
+        const user = await UsersRepository.findById(userId);
+
+        if (!user) throw new AppError(HTTP_STATUS.NOT_FOUND, "User not found");
 
         const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
 
-        if(!isPasswordValid) throw new AppError(400, "Current password is incorrect");
+        if (!isPasswordValid) throw new AppError(HTTP_STATUS.UNAUTHORIZED, "Current password is incorrect");
 
         const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-        await prisma.user.update({
-            where: {
-                id: userId,
-            },
-            data: {
-                password: hashedPassword
-            },
-        });
-
-        return {
-            message: "Password changed successfully",
-        };
+        await UsersRepository.updateUser(userId, {password: hashedPassword});
     }
 }

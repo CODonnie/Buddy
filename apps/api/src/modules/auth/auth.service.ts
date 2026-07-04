@@ -3,30 +3,27 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { env } from "../../config/env"
 import { AppError } from "../../shared/errors/AppErrors";
+import { HTTP_STATUS } from "../../shared/constants/http-status";
+import { AuthRepository } from "./auth.repository";
 
-const secret = env.JWT_SECRET;
-
-if (!secret) throw new Error("JWT_SECRET not configured");
 
 export class AuthService {
     static async register(name: string, email: string, password: string) {
-        const existingUser = await prisma.user.findUnique({ 
-            where: { email },
-        });
+        const existingUser = await AuthRepository.findByEmail(email);
 
         if (existingUser) {
-            throw new AppError(409, "User already exists");
+            throw new AppError(HTTP_STATUS.CONFLICT, "User already exists");
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        const user = await prisma.user.create({
-            data: {
+        const user = await AuthRepository.createUser(
+            {
                 name,
                 email,
                 password: hashedPassword,
             },
-        });
+        );
 
         return {
             user: {
@@ -39,24 +36,22 @@ export class AuthService {
     }
 
     static async login(email: string, password: string) {
-        const user = await prisma.user.findUnique({ 
-            where: { email },
-        });
+        const user = await AuthRepository.findByEmail(email);
 
         if (!user) {
-            throw new AppError(401, "Invalid Credentials");
+            throw new AppError(HTTP_STATUS.UNAUTHORIZED, "Invalid Credentials");
         }
 
         const isPasswordValid = await bcrypt.compare(password, user.password);
 
         if (!isPasswordValid) {
-            throw new AppError(401, "Invalid Credentials");
+            throw new AppError(HTTP_STATUS.UNAUTHORIZED, "Invalid Credentials");
         }
 
         const accessToken = jwt.sign(
             { userId: user.id },
-            secret,
-            { expiresIn: "15m"}
+            env.JWT_SECRET,
+            { expiresIn: "15m" }
         );
 
         return {
@@ -67,18 +62,5 @@ export class AuthService {
                 email: user.email
             }
         }
-    }
-
-    static async getCurrentUser(userId: string) {
-        const user = await prisma.user.findUnique({ where: { id: userId }});
-
-        if (!user) throw new AppError(404, "User not found");
-
-        return {
-            id: user.id,
-            name: user.name,
-            email: user.email,
-            createdAt: user.createdAt,
-        };
     }
 }

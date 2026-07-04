@@ -2,13 +2,20 @@ import { Response } from "express";
 import { UsersService } from "./users.services";
 import { AuthRequest } from "../../shared/middleware/auth.middleware";
 import { asyncHandler } from "../../shared/utils/async-handler";
+import { HTTP_STATUS } from "../../shared/constants/http-status";
+import { sendResponse } from "../../shared/utils/send-response";
 
 export class UsersController {
     static me = asyncHandler(
         async (req: AuthRequest, res: Response) => {
             const user = await UsersService.getCurrentUser(req.user!.userId);
 
-            res.status(200).json(user);
+            sendResponse({
+                res,
+                statusCode: HTTP_STATUS.OK,
+                message: "User fetched successfully",
+                data: user,
+            });
         });
 
     static updateProfile = asyncHandler(
@@ -18,7 +25,12 @@ export class UsersController {
                 req.body
             );
 
-            res.status(200).json(user);
+            sendResponse({
+                res,
+                statusCode: HTTP_STATUS.OK,
+                message: "User updated successfully",
+                data: user,
+            });
         });
 
     static changePassword = asyncHandler(
@@ -26,11 +38,16 @@ export class UsersController {
             const { currentPassword, newPassword } = req.body;
 
             const result = await UsersService.changePassword(
-                req.user!.userId,
+                req.user!.userId, {
                 currentPassword,
                 newPassword
+            }
             );
 
-            res.status(200).json(result);
+            sendResponse({
+                res,
+                statusCode: HTTP_STATUS.OK,
+                message: "User's password changed successfully",
+            });
         });
 }
