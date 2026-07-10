@@ -1,15 +1,28 @@
 import { api } from "../../../api/client";
 
+type ApiResponse<T> = {
+    data: T;
+};
+
+type AuthPayload = {
+    accessToken: string;
+    user: {
+        id: string;
+        name: string;
+        email: string;
+    };
+};
+
 export const loginRequest = async (
     email: string,
     password: string
 ) => {
-    const res = await api.post("/auth/login", {
+    const res = await api.post<ApiResponse<AuthPayload>>("/auth/login", {
         email,
         password,
     });
 
-    return res.data;
+    return res.data.data;
 }
 
 export const registerRequest = async (
@@ -23,5 +36,5 @@ export const registerRequest = async (
         password,
     });
 
-    return res.data;
+    return res.data.data;
 }

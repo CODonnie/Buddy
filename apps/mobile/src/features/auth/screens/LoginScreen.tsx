@@ -14,9 +14,7 @@ export default function LoginScreen({ navigation }: any) {
         try {
             const data = await loginRequest(email, password);
             
-            setAuth(data.user, data.accessToken);
-
-            navigation.replace('Home');
+            await setAuth(data.user, data.accessToken);
         } catch (err) {
             console.log("Login error:", err);
         }

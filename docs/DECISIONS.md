@@ -129,3 +129,19 @@ Buddy prioritizes active learning over answer generation.
 Reason:
 
 The product's primary value is improving learning outcomes, not simply providing answers.
+
+---
+
+## ADR-012
+
+Repository responses are mapped before leaving the service layer.
+
+Reason:
+
+Never expose raw Prisma models directly to API consumers.
+
+Benefits
+
+- Prevents leaking internal fields
+- Prevents accidental password exposure
+- Makes API contracts stable

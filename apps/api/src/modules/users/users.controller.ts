@@ -37,7 +37,7 @@ export class UsersController {
         async (req: AuthRequest, res: Response) => {
             const { currentPassword, newPassword } = req.body;
 
-            const result = await UsersService.changePassword(
+            await UsersService.changePassword(
                 req.user!.userId, {
                 currentPassword,
                 newPassword

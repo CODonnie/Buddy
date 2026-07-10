@@ -1,4 +1,5 @@
 import { prisma } from "../../config/db";
+import { Prisma } from "@prisma/client";
 
 export class StudyRepository {
   static async create(data: {
@@ -27,7 +28,7 @@ export class StudyRepository {
     });
   }
 
-  static async update(id: string, data: any) {
+  static async update(id: string, data: Prisma.StudySessionUpdateInput) {
     return prisma.studySession.update({
       where: { id },
       data,

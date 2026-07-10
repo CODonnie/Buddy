@@ -37,6 +37,11 @@ export class AuthController {
 
         const user = await AuthService.getCurrentUser(userId!);
 
-        res.status(HTTP_STATUS.OK).json(user);
+        sendResponse({
+            res,
+            statusCode: HTTP_STATUS.OK,
+            message: "Current user retrieved successfully",
+            data: user,
+        });
     });
 }

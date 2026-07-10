@@ -1,4 +1,5 @@
 import { prisma } from "../../config/db";
+import { Prisma } from "@prisma/client";
 
 export class UsersRepository {
   static findById(id: string) {
@@ -7,7 +8,7 @@ export class UsersRepository {
     });
   }
 
-  static updateUser(id: string, data: any) {
+  static updateUser(id: string, data: Prisma.UserUpdateInput) {
     return prisma.user.update({
       where: { id },
       data,

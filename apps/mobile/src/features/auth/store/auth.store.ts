@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { api } from "../../../api/client";
 import { saveToken, getToken, removeToken } from "./auth.storage";
 
 type User = {
@@ -57,29 +58,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                 return;
             }
 
-            const res = await fetch("http://10.120.143.9:5000/api/v1/auth/me", {
+            const res = await api.get<{ data: User }>("/auth/me", {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
             });
 
-            if (!res.ok) {
-                await removeToken();
-
-                set({
-                    user: null,
-                    token: null,
-                    isAuthenticated: false,
-                    isLoading: false,
-                });
-
-                return;
-            }
-
-            const user = await res.json();
-
             set({
-                user,
+                user: res.data.data,
                 token,
                 isAuthenticated: true,
                 isLoading: false,

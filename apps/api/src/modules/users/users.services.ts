@@ -1,4 +1,3 @@
-import { prisma } from "../../config/db";
 import bcrypt from "bcrypt";
 import { AppError } from "../../shared/errors/AppErrors";
 import { HTTP_STATUS } from "../../shared/constants/http-status";
@@ -29,7 +28,15 @@ export class UsersService {
 
         const updatedUser = await UsersRepository.updateUser(userId, data);
 
-        return updatedUser;
+        return {
+            id: updatedUser.id,
+            name: updatedUser.name,
+            email: updatedUser.email,
+            bio: updatedUser.bio,
+            avatarUrl: updatedUser.avatarUrl,
+            createdAt: updatedUser.createdAt,
+            updatedAt: updatedUser.updatedAt,
+        };
     }
 
     static async changePassword(userId: string, data: ChangePasswordDto) {
