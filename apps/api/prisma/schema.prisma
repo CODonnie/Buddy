@@ -13,6 +13,19 @@ enum SessionStatus {
   CANCELLED
 }
 
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum Mood {
+  CONFUSED
+  FOCUSED
+  TIRED
+  MOTIVATED
+}
+
 model User {
   id        String   @id @default(uuid())
   name      String
@@ -23,6 +36,7 @@ model User {
   avatarUrl String?
 
   sessions  StudySession[]
+  learningProfile LearningProfile?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
@@ -45,7 +59,39 @@ model StudySession {
 
   userId      String
   user        User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  learningEntry LearningEntry?
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model LearningEntry {
+  id              String   @id @default(uuid())
+  studySessionId  String   @unique
+
+  topic           String
+  notes           String?
+  difficulty      Difficulty
+  understanding   Int?
+  mood            Mood?
+  usedAI          Boolean  @default(false)
+
+  createdAt       DateTime @default(now())
+
+  studySession    StudySession @relation(fields: [studySessionId], references: [id], onDelete: Cascade)
+}
+
+model LearningProfile {
+  id                  String   @id @default(uuid())
+  userId              String   @unique
+  totalSessions       Int      @default(0)
+  totalStudyMinutes   Int      @default(0)
+  studyStreak         Int      @default(0)
+  averageUnderstanding Float    @default(0)
+  lastStudyDate       DateTime? 
+
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

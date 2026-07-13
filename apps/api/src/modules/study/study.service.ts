@@ -1,5 +1,6 @@
 import { AppError } from "../../shared/errors/AppErrors";
 import { HTTP_STATUS } from "../../shared/constants/http-status";
+import { LearningProfileService } from "../learning-profile/learning-profile.service";
 import { StudyRepository } from "./study.repository";
 
 export class StudyService {
@@ -60,6 +61,8 @@ export class StudyService {
             duration,
             status: "COMPLETED",
         });
+
+        await LearningProfileService.recalculateProfile(userId);
 
         return this.toStudySession(updatedSession);
     }

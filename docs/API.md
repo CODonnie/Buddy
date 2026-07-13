@@ -28,7 +28,7 @@ GET /users/me
 
 Current profile
 
-PATCH /users/profile
+PATCH /users/me
 
 Update profile
 
@@ -40,7 +40,7 @@ Change password
 
 # Study Sessions
 
-POST /study
+POST /study/start
 
 Start study session
 
